@@ -23,7 +23,7 @@ const server = http.createServer(app);
 const corsOptions = {
   origin: process.env.FRONTEND_URL || '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Bypass-Tunnel-Reminder'],
   credentials: true
 };
 
