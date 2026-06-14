@@ -1,6 +1,6 @@
 # Splitwise Clone App
 
-### 🔗 Live Link: [https://frontend-tan-eight-47.vercel.app](https://frontend-tan-eight-47.vercel.app)
+### 🔗 Live Link: [https://splitwise-fullstack-pi.vercel.app](https://splitwise-fullstack-pi.vercel.app)
 
 A simplified Splitwise clone featuring user authentication, group management, advanced expense splits (equal, unequal, percentage, and shares), dynamically calculated group-wise/net balances, direct debt settlement, and real-time expense chat.
 
