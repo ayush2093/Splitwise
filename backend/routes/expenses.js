@@ -217,4 +217,67 @@ router.get('/expenses/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// POST CHAT MESSAGE (HTTP FALLBACK FOR SERVERLESS CLOUD ENVIRONMENTS)
+router.post('/expenses/:id/messages', authenticateToken, async (req, res) => {
+  const expenseId = parseInt(req.params.id);
+  const { message } = req.body;
+
+  if (isNaN(expenseId) || !message || message.trim() === '') {
+    return res.status(400).json({ error: 'Invalid message or expense ID' });
+  }
+
+  try {
+    // 1. Fetch Expense to check group
+    const expenseResult = await db.query(
+      `SELECT group_id FROM expenses WHERE id = $1`,
+      [expenseId]
+    );
+
+    if (expenseResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+    const expense = expenseResult.rows[0];
+
+    // 2. Verify membership to the group of this expense
+    const memberCheck = await db.query(
+      'SELECT is_active FROM group_members WHERE group_id = $1 AND user_id = $2 AND is_active = TRUE',
+      [expense.group_id, req.user.id]
+    );
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not an active member of the group this expense belongs to' });
+    }
+
+    // 3. Insert message into DB
+    const result = await db.query(
+      `INSERT INTO chat_messages (expense_id, user_id, message)
+       VALUES ($1, $2, $3)
+       RETURNING id, message, created_at`,
+      [expenseId, req.user.id, message.trim()]
+    );
+
+    const dbMessage = result.rows[0];
+
+    // 4. Format payload
+    const payload = {
+      id: dbMessage.id,
+      expense_id: expenseId,
+      user_id: req.user.id,
+      user_name: req.user.name,
+      message: dbMessage.message,
+      created_at: dbMessage.created_at
+    };
+
+    // 5. Broadcast via Socket.io if available
+    if (req.io) {
+      const roomName = `expense_${expenseId}`;
+      req.io.to(roomName).emit('receive_message', payload);
+    }
+
+    res.status(201).json(payload);
+  } catch (error) {
+    console.error('Post chat message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

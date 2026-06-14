@@ -30,6 +30,17 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Socket.io Setup
+const io = new Server(server, {
+  cors: corsOptions
+});
+
+// Inject io instance into request object for route handlers
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // Mount REST API routers
 app.use('/api/auth', authRouter);
 app.use('/api/groups', groupsRouter);
@@ -43,11 +54,6 @@ app.use('/api/import', importRouter);
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date() });
-});
-
-// Socket.io Setup
-const io = new Server(server, {
-  cors: corsOptions
 });
 
 // Socket.io JWT Authentication Middleware

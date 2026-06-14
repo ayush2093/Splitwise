@@ -133,7 +133,26 @@ export default function Dashboard({ onSeed }) {
       console.warn('Socket error:', errPayload.error);
     });
 
+    // Fallback polling for serverless (Vercel) environments where sockets are not persistent
+    const pollingInterval = setInterval(async () => {
+      try {
+        const details = await api.get(`/expenses/${selectedExpenseId}`);
+        setMessages((prev) => {
+          const merged = [...prev];
+          (details.messages || []).forEach(newMsg => {
+            if (!merged.some(m => m.id === newMsg.id)) {
+              merged.push(newMsg);
+            }
+          });
+          return merged.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        });
+      } catch (err) {
+        console.error('Error polling chat history:', err);
+      }
+    }, 3000);
+
     return () => {
+      clearInterval(pollingInterval);
       if (socket) {
         socket.emit('leave_expense', parseInt(selectedExpenseId));
         socket.disconnect();
@@ -162,18 +181,31 @@ export default function Dashboard({ onSeed }) {
     }
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !socketRef.current || !selectedExpenseId) return;
+    if (!newMessage.trim() || !selectedExpenseId) return;
+
+    const msgText = newMessage.trim();
+    setNewMessage('');
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    socketRef.current.emit('stop_typing', { expenseId: parseInt(selectedExpenseId) });
+    if (socketRef.current) {
+      socketRef.current.emit('stop_typing', { expenseId: parseInt(selectedExpenseId) });
+    }
 
-    socketRef.current.emit('send_message', {
-      expenseId: parseInt(selectedExpenseId),
-      message: newMessage.trim()
-    });
-    setNewMessage('');
+    try {
+      // Always send messages via HTTP POST to guarantee DB save in serverless env
+      const res = await api.post(`/expenses/${selectedExpenseId}/messages`, { message: msgText });
+      
+      // Update local state immediately for instant feedback
+      setMessages((prev) => {
+        if (prev.some(m => m.id === res.id)) return prev;
+        return [...prev, res];
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      alert('Failed to send message: ' + (err.message || 'Something went wrong'));
+    }
   };
 
   const handleSeedDemoData = async () => {

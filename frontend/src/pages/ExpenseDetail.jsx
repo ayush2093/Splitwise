@@ -90,8 +90,27 @@ export default function ExpenseDetail() {
       console.log('Disconnected from chat server');
     });
 
+    // Fallback polling for serverless (Vercel) environments where sockets are not persistent
+    const pollingInterval = setInterval(async () => {
+      try {
+        const data = await api.get(`/expenses/${expenseId}`);
+        setMessages((prev) => {
+          const merged = [...prev];
+          (data.messages || []).forEach(newMsg => {
+            if (!merged.some(m => m.id === newMsg.id)) {
+              merged.push(newMsg);
+            }
+          });
+          return merged.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        });
+      } catch (err) {
+        console.error('Error polling chat history:', err);
+      }
+    }, 3000);
+
     // Cleanup on unmount
     return () => {
+      clearInterval(pollingInterval);
       if (socket) {
         socket.emit('leave_expense', parseInt(expenseId));
         socket.disconnect();
@@ -123,20 +142,32 @@ export default function ExpenseDetail() {
     }
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !socketRef.current) return;
+    if (!newMessage.trim()) return;
+
+    const msgText = newMessage.trim();
+    setNewMessage('');
 
     // Stop typing immediately
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    socketRef.current.emit('stop_typing', { expenseId: parseInt(expenseId) });
+    if (socketRef.current) {
+      socketRef.current.emit('stop_typing', { expenseId: parseInt(expenseId) });
+    }
 
-    socketRef.current.emit('send_message', {
-      expenseId: parseInt(expenseId),
-      message: newMessage.trim()
-    });
-
-    setNewMessage('');
+    try {
+      // Always send messages via HTTP POST to guarantee DB save in serverless env
+      const res = await api.post(`/expenses/${expenseId}/messages`, { message: msgText });
+      
+      // Update local state immediately for instant feedback
+      setMessages((prev) => {
+        if (prev.some(m => m.id === res.id)) return prev;
+        return [...prev, res];
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      alert('Failed to send message: ' + (err.message || 'Something went wrong'));
+    }
   };
 
   const getSplitLabel = (s) => {
