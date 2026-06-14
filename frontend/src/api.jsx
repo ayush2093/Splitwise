@@ -7,6 +7,7 @@ async function request(endpoint, { method = 'GET', body = null } = {}) {
   
   const headers = {
     'Content-Type': 'application/json',
+    'Bypass-Tunnel-Reminder': 'true',
   };
   
   if (token) {

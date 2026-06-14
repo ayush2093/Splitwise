@@ -48,7 +48,10 @@ export default function ExpenseDetail() {
     // Connect to WebSocket server
     const socketUrl = api.getBackendUrl();
     const socket = io(socketUrl, {
-      auth: { token }
+      auth: { token },
+      extraHeaders: {
+        'Bypass-Tunnel-Reminder': 'true'
+      }
     });
     
     socketRef.current = socket;
