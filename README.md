@@ -2,7 +2,27 @@
 
 ### 🔗 Live Link: [https://splitwise-fullstack-pi.vercel.app](https://splitwise-fullstack-pi.vercel.app)
 
-A simplified Splitwise clone featuring user authentication, group management, advanced expense splits (equal, unequal, percentage, and shares), dynamically calculated group-wise/net balances, direct debt settlement, and real-time expense chat.
+---
+
+## 🔑 Demo Credentials (for Evaluation)
+The database has been pre-seeded with all expenses and flatmate accounts from the Spreetail CSV. **You can log in directly using the following credentials or use the "Evaluation Quick Login" buttons on the login page**:
+
+- **Default Password**: `password123` (for all accounts)
+- **Accounts**:
+  - `aisha@example.com` (Aisha - test simplified payments, net debt balances)
+  - `rohan@example.com` (Rohan - test itemized ledger, transaction history)
+  - `priya@example.com` (Priya - test multi-currency conversion USD -> INR)
+  - `sam@example.com` (Sam - test timeline constraints: joined group mid-April)
+  - `meera@example.com` (Meera - test duplicate checker & inactive members)
+
+---
+
+## 📄 Required Submission Documents
+To facilitate evaluation, we have compiled the detailed requirements, database schemas, algorithms, and AI case studies in the following files:
+
+1. [SCOPE.md](file:///Users/ayushsinghchauhan/Desktop/internship/SCOPE.md) – Contains the fully compiled Anomaly log (all 20+ anomalies identified/resolved), plus the Relational Database PostgreSQL schema.
+2. [DECISIONS.md](file:///Users/ayushsinghchauhan/Desktop/internship/DECISIONS.md) – Explains architectural and algorithm choices (greedy debt minimizer, dual ledger model, timeline constraint filtering).
+3. [AI_USAGE.md](file:///Users/ayushsinghchauhan/Desktop/internship/AI_USAGE.md) – Details how AI was used, prompts used, and 3 case studies of code corrections made.
 
 ---
 

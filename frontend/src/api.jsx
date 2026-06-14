@@ -1,6 +1,6 @@
 // API client wrapper for backend calls
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || '/api';
 
 async function request(endpoint, { method = 'GET', body = null } = {}) {
   const token = localStorage.getItem('token');
@@ -53,7 +53,7 @@ export const api = {
   post: (endpoint, body) => request(endpoint, { method: 'POST', body }),
   delete: (endpoint) => request(endpoint, { method: 'DELETE' }),
   getBackendUrl: () => {
-    const url = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const url = import.meta.env.VITE_BACKEND_URL || window.location.origin;
     return url.replace(/\/api\/?$/, '');
   }
 };
